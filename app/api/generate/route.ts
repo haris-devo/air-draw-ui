@@ -40,7 +40,7 @@ const OpenAIResponse = z.object({
 });
 
 const PROMPT =
-  "This is a hand-drawn UI wireframe. Return ONLY a single React function component named App. Use Tailwind classes in a shadcn/ui visual style (neutral palette, rounded-xl, subtle borders, good spacing). Infer the component type (login form, pricing card, profile, dashboard tile, etc.) and use realistic placeholder copy. You may use React.useState for interactivity. No imports, no exports, no markdown fences.";
+  "This is a hand-drawn UI wireframe. Return ONLY a single React function component named App. Use Tailwind classes in a shadcn/ui visual style (neutral palette, rounded-xl, subtle borders, good spacing). Infer the component type (login form, pricing card, profile, dashboard tile, etc.) and use realistic placeholder copy. You may use React.useState for interactivity. It sits centered on a design canvas, so give it no page background, min-h-screen or outer wrapper. No imports, no exports, no markdown fences.";
 
 type Provider = {
   name: string;

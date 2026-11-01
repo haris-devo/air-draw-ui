@@ -14,7 +14,7 @@ Prefer a real pen? Switch the header toggle to **Pen** to turn the camera off an
 | --- | --- |
 | Hand tracking: MediaPipe HandLandmarker (GPU, video mode, 1 hand), fully in the browser | `hooks/use-hand-tracker.ts` |
 | Gesture classification (pure, unit-tested): pointing with hysteresis, palm, peace, independent of camera distance | `lib/gestures.ts` |
-| Strokes, neon rendering, PNG export (black on white, 768 px, cropped to the drawing) | `hooks/use-strokes.ts`, `lib/draw.ts` |
+| Strokes, light-trail rendering, PNG export (black on white, 768 px, cropped to the drawing) | `hooks/use-strokes.ts`, `lib/draw.ts` |
 | Hold-to-trigger gestures with a progress ring | `hooks/use-gesture-hold.ts`, `components/air-canvas.tsx` |
 | `POST /api/generate`: zod validation, Upstash rate limits, Gemini or OpenAI via `fetch` | `app/api/generate/route.ts`, `lib/ratelimit.ts` |
 | Sandboxed live preview (`sandbox="allow-scripts"`, no same-origin) | `components/preview-frame.tsx` |
@@ -83,4 +83,4 @@ Open http://localhost:3000 and allow the camera. In local development the rate l
 
 ## Tech
 
-Next.js (App Router) · TypeScript strict · Tailwind CSS · shadcn/ui · MediaPipe Tasks Vision · Gemini / OpenAI API · Upstash Ratelimit · zod · Framer Motion
+Next.js (App Router) · TypeScript strict · Tailwind CSS · shadcn/ui · MediaPipe Tasks Vision · Google Sans Flex · Gemini / OpenAI API · Upstash Ratelimit · zod · Framer Motion

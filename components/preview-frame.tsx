@@ -62,9 +62,9 @@ export function buildSrcDoc(code: string, runId: string) {
     };
   })();
 </script>
-<style>html, body, #root { min-height: 100%; } body { margin: 0; }</style>
+<style>html, body, #root { min-height: 100%; } body { margin: 0; background: #f7f8fb radial-gradient(#d5dbe5 1px, transparent 1px) 0 0 / 20px 20px; }</style>
 </head>
-<body class="h-full bg-neutral-50 text-neutral-900 antialiased">
+<body class="h-full text-neutral-900 antialiased">
 <div id="root" class="grid min-h-full place-items-center p-6"></div>
 <script type="text/babel" data-presets="react">
 const { useState, useEffect } = React;
@@ -120,7 +120,7 @@ export function PreviewFrame({ code, runId, onResult }: Props) {
       // Model output is untrusted: scripts only, never same-origin.
       sandbox="allow-scripts"
       srcDoc={srcDoc}
-      className="size-full rounded-xl bg-neutral-50"
+      className="size-full"
     />
   );
 }

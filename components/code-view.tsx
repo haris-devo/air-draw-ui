@@ -24,8 +24,8 @@ export function CodeView({ code }: { code: string }) {
   };
 
   return (
-    <div className="relative size-full overflow-hidden rounded-xl border border-white/10 bg-neutral-950">
-      <Button variant="secondary" size="sm" onClick={copy} className="absolute top-3 right-3 z-10">
+    <div className="relative size-full overflow-hidden bg-[#fafbfd]">
+      <Button variant="outline" size="sm" onClick={copy} className="absolute top-3 right-3 z-10 bg-white">
         {copied ? <Check /> : <Copy />}
         {copied ? "Copied" : "Copy"}
       </Button>

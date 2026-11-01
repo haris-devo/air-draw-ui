@@ -30,19 +30,19 @@ export function traceStroke(
   ctx.lineTo(lx, ly);
 }
 
-/** Neon look: a blurred cyan glow pass, then a bright thin core. */
+/** Light-painting look: a warm sodium glow, then a white-hot core. */
 export function drawNeonStroke(ctx: CanvasRenderingContext2D, stroke: Stroke, scale: number, dpr: number) {
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   traceStroke(ctx, stroke, scale);
-  ctx.shadowColor = "rgba(34, 211, 238, 0.9)";
-  ctx.shadowBlur = 18 * dpr;
-  ctx.strokeStyle = "rgba(34, 211, 238, 0.85)";
+  ctx.shadowColor = "rgba(255, 166, 51, 0.95)";
+  ctx.shadowBlur = 20 * dpr;
+  ctx.strokeStyle = "rgba(255, 181, 71, 0.9)";
   ctx.lineWidth = 6 * dpr;
   ctx.stroke();
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = "rgba(236, 254, 255, 0.95)";
+  ctx.strokeStyle = "rgba(255, 249, 236, 1)";
   ctx.lineWidth = 2 * dpr;
   ctx.stroke();
   ctx.restore();

@@ -1,7 +1,7 @@
 // components/air-canvas.tsx
 // Client-only: imported from the Studio client boundary (webcam, canvases, rAF loop).
 
-import { useEffect, useRef, useState, type PointerEvent } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
 import { Hand, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +32,8 @@ type Props = {
   onGenerate: () => void;
   onClear: () => void;
   onStatusChange: (status: CanvasStatus) => void;
+  /** Overlays drawn on top of the camera (status, controls). */
+  children?: ReactNode;
 };
 
 export function AirCanvas({
@@ -43,6 +45,7 @@ export function AirCanvas({
   onGenerate,
   onClear,
   onStatusChange,
+  children,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -167,7 +170,7 @@ export function AirCanvas({
     // Fading fingertip trail.
     s.trail.forEach((p, i) => {
       ctx.beginPath();
-      ctx.fillStyle = `rgba(103, 232, 249, ${((i + 1) / s.trail.length) * 0.35})`;
+      ctx.fillStyle = `rgba(255, 196, 110, ${((i + 1) / s.trail.length) * 0.4})`;
       ctx.arc(p.x * scale, p.y * scale, ((i + 1) / s.trail.length) * 4 * dpr, 0, Math.PI * 2);
       ctx.fill();
     });
@@ -179,9 +182,9 @@ export function AirCanvas({
       ctx.beginPath();
       ctx.arc(x, y, (s.pen === "hand" ? 7 : 9) * dpr, 0, Math.PI * 2);
       if (s.pen === "hand") {
-        ctx.shadowColor = "rgba(34, 211, 238, 1)";
-        ctx.shadowBlur = 16 * dpr;
-        ctx.fillStyle = "rgba(165, 243, 252, 1)";
+        ctx.shadowColor = "rgba(255, 166, 51, 1)";
+        ctx.shadowBlur = 18 * dpr;
+        ctx.fillStyle = "rgba(255, 244, 222, 1)";
         ctx.fill();
       } else {
         ctx.strokeStyle = "rgba(255, 255, 255, 0.85)";
@@ -191,7 +194,7 @@ export function AirCanvas({
       ctx.restore();
 
       if (s.hold) {
-        const color = s.hold.kind === "clear" ? "251, 113, 133" : "34, 211, 238";
+        const color = s.hold.kind === "clear" ? "251, 113, 133" : "255, 181, 71";
         const r = 26 * dpr;
         ctx.save();
         ctx.lineWidth = 4 * dpr;
@@ -206,7 +209,7 @@ export function AirCanvas({
         ctx.beginPath();
         ctx.arc(x, y, r, -Math.PI / 2, -Math.PI / 2 + s.hold.progress * Math.PI * 2);
         ctx.stroke();
-        ctx.font = `600 ${12 * dpr}px system-ui, sans-serif`;
+        ctx.font = `600 ${13 * dpr}px ${getComputedStyle(live).fontFamily}`;
         ctx.textAlign = "center";
         ctx.fillStyle = `rgba(${color}, 1)`;
         ctx.fillText(s.hold.kind === "clear" ? "Clear" : "Generate", x, y - r - 10 * dpr);
@@ -265,16 +268,16 @@ export function AirCanvas({
   const blocked = tracker === "denied" || tracker === "unavailable";
 
   return (
-    <div className="relative grid size-full place-items-center" style={{ containerType: "size" }}>
+    <div className="relative grid size-full items-start justify-items-center" style={{ containerType: "size" }}>
       <div
         ref={frameRef}
-        className="relative overflow-hidden rounded-2xl border border-white/10 bg-neutral-900 shadow-[0_0_80px_-20px_rgba(34,211,238,0.25)]"
+        className="relative overflow-hidden rounded-[28px] bg-lens shadow-[0_2px_4px_rgba(21,26,46,0.08),0_40px_80px_-32px_rgba(21,26,46,0.6)] ring-1 ring-black/5"
         style={{ aspectRatio: aspect, width: `min(100cqw, calc(100cqh * ${aspect}))` }}
       >
         <video
           ref={videoRef}
           className={cn(
-            "absolute inset-0 size-full -scale-x-100 object-cover brightness-[0.6] saturate-[0.8]",
+            "absolute inset-0 size-full -scale-x-100 object-cover brightness-[0.55] contrast-[1.05] saturate-[0.55]",
             penMode && "hidden",
           )}
           onLoadedMetadata={(e) => {
@@ -286,7 +289,7 @@ export function AirCanvas({
           playsInline
         />
         {penMode && (
-          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-size-[24px_24px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.09)_1px,transparent_1px)] bg-size-[22px_22px]" />
         )}
         <canvas ref={inkRef} className={cn("absolute inset-0 size-full", pulsing && "stroke-pulse")} />
         <canvas
@@ -301,14 +304,14 @@ export function AirCanvas({
 
         {tracker === "loading" && (
           <div className="absolute inset-0 grid place-items-center">
-            <Skeleton className="absolute inset-0 rounded-none bg-neutral-800/60" />
-            <div className="relative flex flex-col items-center gap-3 text-sm text-neutral-300">
-              <Hand className="size-8 animate-pulse text-cyan-300" />
+            <Skeleton className="absolute inset-0 rounded-none bg-white/4" />
+            <div className="relative flex flex-col items-center gap-3 text-sm text-white/75">
+              <Hand className="size-8 animate-pulse text-sodium" />
               Loading hand tracking…
               <button
                 type="button"
                 onClick={onUsePen}
-                className="text-xs text-neutral-500 underline-offset-4 hover:text-neutral-300 hover:underline"
+                className="text-xs text-white/45 underline-offset-4 hover:text-white/80 hover:underline"
               >
                 Skip and draw with a pen or mouse
               </button>
@@ -317,18 +320,18 @@ export function AirCanvas({
         )}
 
         {blocked && (
-          <div className="absolute inset-0 grid place-items-center bg-neutral-950/85 p-6 text-center">
+          <div className="absolute inset-0 grid place-items-center bg-lens/90 p-6 pb-24 text-center">
             <div className="flex max-w-sm flex-col items-center gap-3">
               <Hand className="size-8 text-rose-300" />
-              <p className="text-base font-medium text-neutral-100">
+              <p className="text-base font-medium text-white">
                 {tracker === "denied" ? "Camera access is blocked" : "Hand tracking couldn't start"}
               </p>
-              <p className="text-sm text-neutral-400">
+              <p className="text-sm text-white/60">
                 {tracker === "denied"
                   ? "Allow the camera in your browser's address bar and reload to draw in the air. You can also draw with a pen, the mouse or a finger on a touch screen."
                   : "No camera was found, or this browser can't run the hand model. You can still draw with a pen, the mouse or a finger on a touch screen."}
               </p>
-              <Button onClick={onUsePen} className="mt-1">
+              <Button onClick={onUsePen} className="mt-1 h-9 rounded-full bg-white px-4 text-lens hover:bg-white/90">
                 <PenLine />
                 Use pen mode
               </Button>
@@ -336,14 +339,7 @@ export function AirCanvas({
           </div>
         )}
 
-        {tracker === "ready" && !hand && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-5 flex justify-center">
-            <div className="flex items-center gap-2 rounded-full border border-white/10 bg-neutral-950/70 px-4 py-2 text-sm text-neutral-200 backdrop-blur">
-              <Hand className="size-4 text-cyan-300" />
-              Show your hand
-            </div>
-          </div>
-        )}
+        {children}
       </div>
     </div>
   );
