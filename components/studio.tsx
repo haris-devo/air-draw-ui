@@ -2,11 +2,12 @@
 "use client"; // The one client boundary: webcam, canvases, rAF loop, fetch and iframe messaging all live below it.
 
 import { useCallback, useRef, useState } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { AlertTriangle, Code2, Eraser, Eye, Gauge, Hand, PenLine, RotateCcw, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { AirCanvas, type CanvasStatus } from "@/components/air-canvas";
 import { CodeView } from "@/components/code-view";
+import { Morph, type MorphFlight } from "@/components/morph";
 import { PreviewFrame } from "@/components/preview-frame";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -66,6 +67,12 @@ export function Studio() {
   const [penMode, setPenMode] = useState(false);
   const [canvas, setCanvas] = useState<CanvasStatus>({ tracker: "loading", hand: false, drawing: false });
   const lastImage = useRef<string | null>(null);
+  const lensRef = useRef<HTMLDivElement>(null);
+  const previewRef = useRef<HTMLDivElement>(null);
+  const [flight, setFlight] = useState<MorphFlight | null>(null);
+  // The run whose light has landed; the preview stays hidden until then.
+  const [landed, setLanded] = useState<string | null>(null);
+  const reduceMotion = useReducedMotion();
   const busy = gen.kind === "generating" || gen.kind === "rendering";
   const busyRef = useRef(false);
 
@@ -125,6 +132,12 @@ export function Studio() {
     if (result.ok) {
       busyRef.current = false;
       setGen({ ...gen, kind: "success" });
+      // Fly the drawn light into the preview; skip it when it can't be seen or isn't wanted.
+      const from = lensRef.current?.getBoundingClientRect();
+      const to = previewRef.current?.getBoundingClientRect();
+      const drawn = strokes.all();
+      if (reduceMotion || !from || !to || !to.width || drawn.length === 0) setLanded(gen.runId);
+      else setFlight({ runId: gen.runId, strokes: drawn, from, to });
     } else if (!gen.autoRetried && lastImage.current) {
       // First failure: quietly ask the model again before bothering the user.
       void run(lastImage.current, true);
@@ -183,6 +196,7 @@ export function Studio() {
             onGenerate={generate}
             onClear={clear}
             onStatusChange={setCanvas}
+            lensRef={lensRef}
           >
             <span
               role="status"
@@ -246,7 +260,13 @@ export function Studio() {
               <p className="ml-auto truncate pr-1 text-xs text-muted-foreground">React + Tailwind</p>
             </div>
             <TabsContent value="preview" keepMounted className="relative min-h-0">
-              <PreviewPanel gen={gen} onRetry={retry} onPreviewResult={onPreviewResult} />
+              <PreviewPanel
+                ref={previewRef}
+                gen={gen}
+                revealed={gen.kind === "success" && landed === gen.runId}
+                onRetry={retry}
+                onPreviewResult={onPreviewResult}
+              />
             </TabsContent>
             <TabsContent value="code" className="relative min-h-0">
               {code ? (
@@ -258,32 +278,58 @@ export function Studio() {
           </Tabs>
         </section>
       </main>
+      {flight && (
+        <Morph
+          key={flight.runId}
+          flight={flight}
+          onLanded={() => {
+            setLanded(flight.runId);
+            setFlight(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
 function PreviewPanel({
+  ref,
   gen,
+  revealed,
   onRetry,
   onPreviewResult,
 }: {
+  ref: React.Ref<HTMLDivElement>;
   gen: Gen;
+  revealed: boolean;
   onRetry: () => void;
   onPreviewResult: (result: { ok: true } | { ok: false; message: string }) => void;
 }) {
   const shimmer = gen.kind === "generating" || gen.kind === "rendering";
   return (
-    <div className="canvas-grid relative size-full overflow-hidden">
+    <div ref={ref} className="canvas-grid relative size-full overflow-hidden">
       {(gen.kind === "rendering" || gen.kind === "success") && (
         <motion.div
           key={gen.runId}
           className="absolute inset-0"
-          initial={{ opacity: 0, scale: 0.96 }}
-          animate={gen.kind === "success" ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.96 }}
-          transition={{ type: "spring", stiffness: 260, damping: 26 }}
+          initial={{ opacity: 0, scale: 0.94, filter: "blur(8px)" }}
+          animate={revealed ? { opacity: 1, scale: 1, filter: "blur(0px)" } : { opacity: 0, scale: 0.94, filter: "blur(8px)" }}
+          transition={{ type: "spring", stiffness: 220, damping: 24 }}
         >
           <PreviewFrame code={gen.code} runId={gen.runId} onResult={onPreviewResult} />
         </motion.div>
+      )}
+
+      {revealed && gen.kind === "success" && (
+        // The light's afterglow as it turns into the component.
+        <motion.div
+          key={`glow-${gen.runId}`}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(255,181,71,0.35),transparent_55%)]"
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: 1.1, ease: "easeOut" }}
+        />
       )}
 
       {shimmer && (

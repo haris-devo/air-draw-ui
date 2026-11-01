@@ -1,7 +1,7 @@
 // components/air-canvas.tsx
 // Client-only: imported from the Studio client boundary (webcam, canvases, rAF loop).
 
-import { useEffect, useRef, useState, type PointerEvent, type ReactNode } from "react";
+import { useEffect, useRef, useState, type PointerEvent, type ReactNode, type RefObject } from "react";
 import { Hand, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,8 @@ type Props = {
   onStatusChange: (status: CanvasStatus) => void;
   /** Overlays drawn on top of the camera (status, controls). */
   children?: ReactNode;
+  /** Receives the lens element, so the morph can start where the strokes are. */
+  lensRef?: RefObject<HTMLDivElement | null>;
 };
 
 export function AirCanvas({
@@ -46,6 +48,7 @@ export function AirCanvas({
   onClear,
   onStatusChange,
   children,
+  lensRef,
 }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const frameRef = useRef<HTMLDivElement>(null);
@@ -270,7 +273,10 @@ export function AirCanvas({
   return (
     <div className="relative grid size-full items-start justify-items-center" style={{ containerType: "size" }}>
       <div
-        ref={frameRef}
+        ref={(el) => {
+          frameRef.current = el;
+          if (lensRef) lensRef.current = el;
+        }}
         className="relative overflow-hidden rounded-[28px] bg-lens shadow-[0_2px_4px_rgba(21,26,46,0.08),0_40px_80px_-32px_rgba(21,26,46,0.6)] ring-1 ring-black/5"
         style={{ aspectRatio: aspect, width: `min(100cqw, calc(100cqh * ${aspect}))` }}
       >
