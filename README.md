@@ -2,18 +2,18 @@
 
 Draw a UI wireframe in the air with your finger. Gemini or OpenAI turns the sketch into a working React + Tailwind component that renders live next to your drawing, with code you can copy.
 
-- **Pinch** (thumb + index) to draw
+- **Point** (only the index finger up) to draw; curl it or open your hand to lift the pen
 - Hold an **open palm** for 1 s to clear
 - Hold a **peace sign** ✌️ for 0.8 s to generate
 
-No webcam? Draw with the mouse or a finger on a touch screen; the Clear and Generate buttons do the same as the gestures.
+Prefer a real pen? Switch the header toggle to **Pen** to turn the camera off and draw on the canvas with a stylus, trackpad, mouse or a finger on a touch screen. The Clear and Generate buttons do the same as the gestures.
 
 ## How it works
 
 | Piece | Where |
 | --- | --- |
 | Hand tracking: MediaPipe HandLandmarker (GPU, video mode, 1 hand), fully in the browser | `hooks/use-hand-tracker.ts` |
-| Gesture classification (pure, unit-tested): pinch with hysteresis, palm, peace, normalized by palm size | `lib/gestures.ts` |
+| Gesture classification (pure, unit-tested): pointing with hysteresis, palm, peace, independent of camera distance | `lib/gestures.ts` |
 | Strokes, neon rendering, PNG export (black on white, 768 px, cropped to the drawing) | `hooks/use-strokes.ts`, `lib/draw.ts` |
 | Hold-to-trigger gestures with a progress ring | `hooks/use-gesture-hold.ts`, `components/air-canvas.tsx` |
 | `POST /api/generate`: zod validation, Upstash rate limits, Gemini or OpenAI via `fetch` | `app/api/generate/route.ts`, `lib/ratelimit.ts` |

@@ -6,6 +6,14 @@ import type { Point, Stroke } from "@/lib/draw";
 
 // Skip points closer than this (in height units) to keep strokes light.
 const MIN_STEP = 0.003;
+// Strokes shorter than this (in height units) are accidental blips and are dropped.
+const MIN_LENGTH = 0.02;
+
+function length(stroke: Stroke) {
+  let total = 0;
+  for (let i = 1; i < stroke.length; i++) total += Math.hypot(stroke[i].x - stroke[i - 1].x, stroke[i].y - stroke[i - 1].y);
+  return total;
+}
 
 export type Strokes = ReturnType<typeof useStrokes>;
 
@@ -31,7 +39,7 @@ export function useStrokes() {
       },
       end() {
         if (current.current) {
-          done.current.push(current.current);
+          if (length(current.current) >= MIN_LENGTH) done.current.push(current.current);
           current.current = null;
           version.current++;
         }

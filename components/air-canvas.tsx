@@ -2,7 +2,7 @@
 // Client-only: imported from the Studio client boundary (webcam, canvases, rAF loop).
 
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { Hand, MousePointer2 } from "lucide-react";
+import { Hand, PenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useHandTracker, type FrameHandler, type TrackerStatus } from "@/hooks/use-hand-tracker";
@@ -27,8 +27,8 @@ type Props = {
   frozen: boolean;
   /** Pulse the strokes (generating). */
   pulsing: boolean;
-  mouseMode: boolean;
-  onUseMouse: () => void;
+  penMode: boolean;
+  onUsePen: () => void;
   onGenerate: () => void;
   onClear: () => void;
   onStatusChange: (status: CanvasStatus) => void;
@@ -38,8 +38,8 @@ export function AirCanvas({
   strokes,
   frozen,
   pulsing,
-  mouseMode,
-  onUseMouse,
+  penMode,
+  onUsePen,
   onGenerate,
   onClear,
   onStatusChange,
@@ -74,7 +74,9 @@ export function AirCanvas({
     setDrawing(pen !== null);
   };
 
-  const onFrame: FrameHandler = (landmarks, now) => {
+  const onFrame: FrameHandler = (frameLandmarks, now) => {
+    // In pen mode the camera is off: treat it as "no hand" so a stroke cut off mid-air ends and the cursor goes away.
+    const landmarks = penMode ? null : frameLandmarks;
     const s = loop.current;
     const ink = inkRef.current;
     const live = liveRef.current;
@@ -107,7 +109,7 @@ export function AirCanvas({
         s.hand = true;
         setHand(true);
       }
-      s.rawGesture = classify(landmarks, s.rawGesture === "pinch");
+      s.rawGesture = classify(landmarks, s.rawGesture === "point");
       const gesture = s.debouncer.update(s.rawGesture, now);
 
       // Mirror x because the video is shown mirrored; units are canvas heights.
@@ -119,12 +121,14 @@ export function AirCanvas({
       s.trail.push(s.tip);
       if (s.trail.length > TRAIL_LENGTH) s.trail.shift();
 
-      if (!frozen && gesture === "pinch") {
+      if (!frozen && gesture === "point") {
         if (s.pen !== "hand") {
           if (s.pen === "pointer") strokes.end();
           strokes.begin(s.tip);
           setPen("hand");
-        } else {
+        } else if (s.rawGesture === "point") {
+          // While the hand is changing pose the debouncer still says "point";
+          // don't extend then, or every stroke ends with a stray tail.
           strokes.extend(s.tip);
         }
       } else if (s.pen === "hand") {
@@ -211,7 +215,7 @@ export function AirCanvas({
     }
   };
 
-  const tracker = useHandTracker(videoRef, !mouseMode, onFrame);
+  const tracker = useHandTracker(videoRef, !penMode, onFrame);
 
   useEffect(() => {
     onStatusChange({ tracker, hand, drawing });
@@ -271,7 +275,7 @@ export function AirCanvas({
           ref={videoRef}
           className={cn(
             "absolute inset-0 size-full -scale-x-100 object-cover brightness-[0.6] saturate-[0.8]",
-            mouseMode && "hidden",
+            penMode && "hidden",
           )}
           onLoadedMetadata={(e) => {
             const { videoWidth, videoHeight } = e.currentTarget;
@@ -281,7 +285,7 @@ export function AirCanvas({
           muted
           playsInline
         />
-        {mouseMode && (
+        {penMode && (
           <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.07)_1px,transparent_1px)] bg-size-[24px_24px]" />
         )}
         <canvas ref={inkRef} className={cn("absolute inset-0 size-full", pulsing && "stroke-pulse")} />
@@ -303,10 +307,10 @@ export function AirCanvas({
               Loading hand tracking…
               <button
                 type="button"
-                onClick={onUseMouse}
+                onClick={onUsePen}
                 className="text-xs text-neutral-500 underline-offset-4 hover:text-neutral-300 hover:underline"
               >
-                Skip and use the mouse
+                Skip and draw with a pen or mouse
               </button>
             </div>
           </div>
@@ -321,12 +325,12 @@ export function AirCanvas({
               </p>
               <p className="text-sm text-neutral-400">
                 {tracker === "denied"
-                  ? "Allow the camera in your browser's address bar and reload to draw in the air. You can also draw with the mouse or a finger on a touch screen."
-                  : "No camera was found, or this browser can't run the hand model. You can still draw with the mouse or a finger on a touch screen."}
+                  ? "Allow the camera in your browser's address bar and reload to draw in the air. You can also draw with a pen, the mouse or a finger on a touch screen."
+                  : "No camera was found, or this browser can't run the hand model. You can still draw with a pen, the mouse or a finger on a touch screen."}
               </p>
-              <Button onClick={onUseMouse} className="mt-1">
-                <MousePointer2 />
-                Use mouse instead
+              <Button onClick={onUsePen} className="mt-1">
+                <PenLine />
+                Use pen mode
               </Button>
             </div>
           </div>

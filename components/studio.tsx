@@ -3,7 +3,7 @@
 
 import { useCallback, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, Code2, Eraser, Eye, Gauge, RotateCcw, Sparkles, Wand2 } from "lucide-react";
+import { AlertTriangle, Code2, Eraser, Eye, Gauge, Hand, PenLine, RotateCcw, Sparkles, Wand2 } from "lucide-react";
 import { toast } from "sonner";
 import { AirCanvas, type CanvasStatus } from "@/components/air-canvas";
 import { CodeView } from "@/components/code-view";
@@ -43,7 +43,7 @@ function pillFor(gen: Gen, canvas: CanvasStatus): Pill {
     case "unavailable":
       return { label: "No camera", tone: "rose" };
     case "off":
-      return canvas.drawing ? { label: "Drawing", tone: "cyan" } : { label: "Mouse mode", tone: "neutral" };
+      return canvas.drawing ? { label: "Drawing", tone: "cyan" } : { label: "Pen mode", tone: "neutral" };
   }
   if (canvas.drawing) return { label: "Drawing", tone: "cyan" };
   if (!canvas.hand) return { label: "Show your hand", tone: "amber" };
@@ -51,7 +51,7 @@ function pillFor(gen: Gen, canvas: CanvasStatus): Pill {
 }
 
 const LEGEND = [
-  { emoji: "🤏", gesture: "Pinch", action: "draw" },
+  { emoji: "☝️", gesture: "Point", action: "draw" },
   { emoji: "✋", gesture: "Palm", action: "clear" },
   { emoji: "✌️", gesture: "Peace", action: "generate" },
 ];
@@ -61,7 +61,7 @@ export function Studio() {
   const [gen, setGen] = useState<Gen>({ kind: "idle" });
   const [code, setCode] = useState("");
   const [tab, setTab] = useState<string>("preview");
-  const [mouseMode, setMouseMode] = useState(false);
+  const [penMode, setPenMode] = useState(false);
   const [canvas, setCanvas] = useState<CanvasStatus>({ tracker: "loading", hand: false, drawing: false });
   const lastImage = useRef<string | null>(null);
   const busy = gen.kind === "generating" || gen.kind === "rendering";
@@ -97,7 +97,7 @@ export function Studio() {
     if (busyRef.current) return;
     const image = exportStrokesPng(strokes.all());
     if (!image) {
-      toast("Draw something first", { description: "Pinch to draw, or drag with the mouse." });
+      toast("Draw something first", { description: "Point your index finger to draw, or switch to Pen mode." });
       return;
     }
     lastImage.current = image;
@@ -152,7 +152,27 @@ export function Studio() {
           <span className={cn("size-1.5 rounded-full bg-(--dot)", pill.pulse && "animate-pulse")} />
           {pill.label}
         </span>
-        <ul className="hidden items-center gap-1.5 md:flex" aria-label="Gesture legend">
+        <div role="group" aria-label="Drawing input" className="flex rounded-full border border-white/10 bg-white/3 p-0.5">
+          {[
+            { pen: false, label: "Hand", icon: <Hand /> },
+            { pen: true, label: "Pen", icon: <PenLine /> },
+          ].map((option) => (
+            <button
+              key={option.label}
+              type="button"
+              aria-pressed={penMode === option.pen}
+              onClick={() => setPenMode(option.pen)}
+              className={cn(
+                "flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium transition-colors [&_svg]:size-3.5",
+                penMode === option.pen ? "bg-white/10 text-neutral-100" : "text-neutral-400 hover:text-neutral-200",
+              )}
+            >
+              {option.icon}
+              {option.label}
+            </button>
+          ))}
+        </div>
+        <ul className={cn("hidden items-center gap-1.5", !penMode && "md:flex")} aria-label="Gesture legend">
           {LEGEND.map((g) => (
             <li
               key={g.gesture}
@@ -181,8 +201,8 @@ export function Studio() {
             strokes={strokes}
             frozen={busy}
             pulsing={busy}
-            mouseMode={mouseMode}
-            onUseMouse={() => setMouseMode(true)}
+            penMode={penMode}
+            onUsePen={() => setPenMode(true)}
             onGenerate={generate}
             onClear={clear}
             onStatusChange={setCanvas}
@@ -258,7 +278,7 @@ function PreviewPanel({
         <Empty
           icon={<Sparkles />}
           title="Your component appears here"
-          body="Pinch and draw a wireframe in the air, then hold ✌️ (or press Generate)."
+          body="Point your index finger and draw a wireframe in the air, then hold ✌️ (or press Generate)."
         />
       )}
 
