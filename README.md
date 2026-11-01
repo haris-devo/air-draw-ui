@@ -1,6 +1,6 @@
 # Air Draw → UI
 
-Draw a UI wireframe in the air with your finger. Gemini turns the sketch into a working React + Tailwind component that renders live next to your drawing, with code you can copy.
+Draw a UI wireframe in the air with your finger. Gemini or OpenAI turns the sketch into a working React + Tailwind component that renders live next to your drawing, with code you can copy.
 
 - **Pinch** (thumb + index) to draw
 - Hold an **open palm** for 1 s to clear
@@ -16,12 +16,12 @@ No webcam? Draw with the mouse or a finger on a touch screen; the Clear and Gene
 | Gesture classification (pure, unit-tested): pinch with hysteresis, palm, peace, normalized by palm size | `lib/gestures.ts` |
 | Strokes, neon rendering, PNG export (black on white, 768 px, cropped to the drawing) | `hooks/use-strokes.ts`, `lib/draw.ts` |
 | Hold-to-trigger gestures with a progress ring | `hooks/use-gesture-hold.ts`, `components/air-canvas.tsx` |
-| `POST /api/generate`: zod validation, Upstash rate limits, Gemini via `fetch` | `app/api/generate/route.ts`, `lib/ratelimit.ts` |
+| `POST /api/generate`: zod validation, Upstash rate limits, Gemini or OpenAI via `fetch` | `app/api/generate/route.ts`, `lib/ratelimit.ts` |
 | Sandboxed live preview (`sandbox="allow-scripts"`, no same-origin) | `components/preview-frame.tsx` |
 
-The Gemini key is only read inside the route handler and is sent to Google in a request header, so it never reaches the browser.
+The model API key is only read inside the route handler and is sent to the provider in a request header, so it never reaches the browser.
 
-**Limits:** each IP gets 5 generations per 10 minutes, and all visitors share a daily cap (default 400). If Gemini itself says the quota is used up, the app shows a "Demo quota reached" screen with a demo video (`public/demo.mp4`, currently a placeholder; replace it with your own recording).
+**Limits:** each IP gets 5 generations per 10 minutes, and all visitors share a daily cap (default 400). If the model provider says the quota is used up, the app shows a "Demo quota reached" screen with a demo video (`public/demo.mp4`, currently a placeholder; replace it with your own recording).
 
 ## Setup
 
@@ -36,7 +36,9 @@ Fill in `.env.local`:
 
 | Variable | What it is |
 | --- | --- |
-| `GEMINI_API_KEY` | Your Gemini API key (see below) |
+| `OPENAI_API_KEY` | Optional. Your OpenAI API key. When set, OpenAI is used instead of Gemini |
+| `OPENAI_MODEL` | Optional. Any OpenAI model with image input (default `gpt-6-astra`) |
+| `GEMINI_API_KEY` | Your Gemini API key (see below). Not needed when `OPENAI_API_KEY` is set |
 | `GEMINI_MODEL` | Any Gemini model with image input, e.g. `gemini-3.8-flash` |
 | `UPSTASH_REDIS_REST_URL` | REST URL of your Upstash Redis database |
 | `UPSTASH_REDIS_REST_TOKEN` | REST token of the same database |
@@ -66,7 +68,7 @@ Open http://localhost:3000 and allow the camera. In local development the rate l
 
 1. Push this repository to GitHub.
 2. In Vercel, click **Add New → Project** and import the repository. The Next.js preset needs no changes.
-3. Under **Environment Variables**, add `GEMINI_API_KEY`, `GEMINI_MODEL`, `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (and `GENERATE_DAILY_CAP` if you want a different cap).
+3. Under **Environment Variables**, add `OPENAI_API_KEY` (or `GEMINI_API_KEY` and `GEMINI_MODEL`), `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` (and `GENERATE_DAILY_CAP` if you want a different cap).
 4. Deploy. The camera only works over HTTPS, which Vercel provides.
 
 ## Scripts
@@ -81,4 +83,4 @@ Open http://localhost:3000 and allow the camera. In local development the rate l
 
 ## Tech
 
-Next.js (App Router) · TypeScript strict · Tailwind CSS · shadcn/ui · MediaPipe Tasks Vision · Gemini API · Upstash Ratelimit · zod · Framer Motion
+Next.js (App Router) · TypeScript strict · Tailwind CSS · shadcn/ui · MediaPipe Tasks Vision · Gemini / OpenAI API · Upstash Ratelimit · zod · Framer Motion

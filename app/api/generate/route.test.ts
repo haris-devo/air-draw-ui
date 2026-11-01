@@ -113,6 +113,32 @@ describe("POST /api/generate", () => {
     expect(sent.contents[0].parts[1].inline_data).toEqual({ mime_type: "image/png", data: "iVBORw0KGgo=" });
   });
 
+  it("uses OpenAI when OPENAI_API_KEY is set, reading only message output_text", async () => {
+    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+    vi.stubEnv("OPENAI_MODEL", "gpt-test");
+    const fetchMock = gemini(200, {
+      output: [
+        { type: "reasoning", summary: [] },
+        { type: "message", content: [{ type: "output_text", text: "```jsx\nfunction App() { return <p />; }\n```" }] },
+      ],
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const res = await post({ image: PNG });
+    expect(await res.json()).toEqual({ code: "function App() { return <p />; }" });
+
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.openai.com/v1/responses");
+    expect((init.headers as Record<string, string>).authorization).toBe("Bearer sk-test");
+    const sent = JSON.parse(init.body as string);
+    expect(sent.model).toBe("gpt-test");
+    expect(sent.input[0].content[1]).toEqual({ type: "input_image", image_url: PNG });
+
+    vi.stubGlobal("fetch", gemini(429, { error: { code: "insufficient_quota" } }));
+    expect(await (await post({ image: PNG })).json()).toMatchObject({ error: "quota" });
+    vi.stubGlobal("fetch", gemini(200, { output: [] }));
+    expect(await (await post({ image: PNG })).json()).toMatchObject({ error: "empty" });
+  });
+
   it("returns 500 config when env vars are missing", async () => {
     vi.stubEnv("GEMINI_API_KEY", "");
     expect((await post({ image: PNG })).status).toBe(500);

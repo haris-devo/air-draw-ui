@@ -124,7 +124,7 @@ export function Studio() {
       busyRef.current = false;
       setGen({ ...gen, kind: "success" });
     } else if (!gen.autoRetried && lastImage.current) {
-      // First failure: quietly ask Gemini again before bothering the user.
+      // First failure: quietly ask the model again before bothering the user.
       void run(lastImage.current, true);
     } else {
       busyRef.current = false;
@@ -270,7 +270,7 @@ function PreviewPanel({
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 p-6 text-center">
           <div>
             <p className="text-base font-medium text-neutral-100">Demo quota reached for today</p>
-            <p className="mt-1 text-sm text-neutral-400">The free Gemini budget is used up. Here&apos;s what it looks like:</p>
+            <p className="mt-1 text-sm text-neutral-400">The demo budget is used up. Here&apos;s what it looks like:</p>
           </div>
           <video
             src="/demo.mp4"
